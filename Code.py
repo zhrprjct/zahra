@@ -8,7 +8,7 @@ from scipy.stats import beta
 from sklearn.metrics import accuracy_score
 import winsound
 import os
-
+epsln=0.001
 
 # function to count the number of the infected neighbores of i at t:
 def CNbr(G,X):
@@ -44,6 +44,7 @@ def Sample_hidden_state(pos_probs,X,G,F,Y,param,P,t):
     theta_0_=param[4]
     theta_1_=param[5]
     n,T=X.shape[0],X.shape[1]
+
     for i in range(n):
         if t==0:
             p_0,p_1=P,1-P
@@ -131,12 +132,11 @@ def Calculate_X(K,T,X,G,F,Y,param,P):
     pos_probs=np.zeros((n,T))
     for k in range(K):
         for t in range(T):
-            np.savetxt("MyF.txt",np.array([k,t]))
-            
+            np.savetxt('my_file.txt' ,[k,t])
+
             hidden_states=Sample_hidden_state(pos_probs,X,G,F,Y,param,P,t)
             X=hidden_states[0]
             pos_probs=hidden_states[1]
-    np.savetxt("MyF.txt",pos_probs)
     
     return X  ,pos_probs              
 
@@ -171,7 +171,7 @@ def R_(G,X,params,F):
     return R
 
 # function to sample new parameters and update parameters:
-def Params(R,G,F,X,n,T,Y,hyper_param):
+def Params(R,G,F,X,n,T,YF,hyper_params):
     
     a_alpha=hyper_params[0]
     b_alpha=hyper_params[1]
@@ -185,11 +185,11 @@ def Params(R,G,F,X,n,T,Y,hyper_param):
     b_teta0=hyper_params[9]
     a_teta1=hyper_params[10]
     b_teta1=hyper_params[11]
-      
-    TP=np.sum(np.multiply(unique_rows.dot(X),YF))
-    FP=np.count_nonzero(unique_rows.dot(X)-YF==-1)
+    unique_rows=np.unique(F,axis=0)  
+    TP=np.sum(np.multiply(unique_rows.dot(X),YF_missing1))
+    FP=np.count_nonzero(unique_rows.dot(X)-YF_missing1==-1)
     
-    infected_neighbore=np.array(CNbr(G,X,n,T))
+    infected_neighbore=np.array(CNbr(G,X))
     a_alpha, b_alpha=a_alpha +  np.count_nonzero(R==0) , b_alpha +np.count_nonzero(X==0)- np.count_nonzero(R==0)
     alpha_=Sample_alpha(a_alpha, b_alpha)
     a_beta,b_beta=a_beta + np.count_nonzero(R==2) , b_beta +np.sum(np.multiply((1-X),infected_neighbore))-np.count_nonzero(R==2)
@@ -197,14 +197,16 @@ def Params(R,G,F,X,n,T,Y,hyper_param):
     a_betaf ,b_betaf=a_betaf + np.count_nonzero(R==3) , b_betaf +np.sum(np.multiply((1-X),F.dot(X)))-np.count_nonzero(R==3)
     betaf=Sample_betaf(a_betaf ,b_betaf)
     while alpha_>beta_:
+        np.savetxt("myfil.txt",[alpha_,beta_])
         alpha_=Sample_alpha(a_alpha, b_alpha)
         beta_=Sample_beta(a_beta, b_beta)
     while beta_>betaf:
+        np.savetxt("myfil.txt",[beta_,betaf])
         betaf=Sample_betaf(a_betaf, b_betaf)
     gama_=Sample_gama(a_gama +np.count_nonzero((X[:,:-1]-X[:,1:])==1), b_gama+np.sum(X)-np.count_nonzero((X[:,:-1]-X[:,1:])==1))
     theta_0_=Sample_theta0( a_teta0+FP,b_teta0+np.count_nonzero((unique_rows.dot(X))==0)-FP)
     theta_1_=Sample_theta1( a_teta1+TP,b_teta1+np.sum(unique_rows.dot(X))-TP)
-    
+    params=np.array([alpha_,beta_,betaf,gama_,theta_0_,theta_1_])
     R=R_(G,X,params,F)
     param=[alpha_,beta_,betaf,gama_,theta_0_,theta_1_]
     return param,R
