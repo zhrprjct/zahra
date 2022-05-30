@@ -53,15 +53,16 @@ if os.path.exists('Xreal.npy'):
 n,T=X_True.shape[0],X_True.shape[1]
 if os.path.exists('params.npy'):
     params = np.load('params.npy')
-if os.path.exists('MissingData.npy'):
-    params = np.load('MissingData.npy')    
-MissingData= open('MissingData', 'r')
+# best initial value for X
+if os.path.exists('pool_list.npy'):
+    pool_list = np.load('pool_list.npy',allow_pickle=True)
+X=pool_list[0][1]        
 #function to plot figure 2:    
-def plot_AUC_mu(MissingData)
+def plot_AUC_t(YF_missing,mu):
     avg_roc=[]
-    YF_missing=MissingData[0]
-    mu=MissingData[1]
-    unique_rows=np.unique(F)
+    #YF_missing=MissingData[0]
+    #mu=MissingData[1]
+    unique_rows=np.unique(F,axis=0)
     #calculate y_missing:
     Y=np.zeros((n,T))
     for i in range(n):
@@ -83,7 +84,7 @@ def plot_AUC_mu(MissingData)
         y_test=np.hstack(X_True[:,:Train.shape[1]])
     
         roc_.append(plot_ROC(y_score,y_test))
-    plt.plot(range(10,360,10),roc_)
+    plt.plot(range(10,360,10),roc_,label='mu=',mu)
     avg_roc=[mu,np.mean(np.array(roc_))]
     return avg_roc
 # function to plot roc:

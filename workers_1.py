@@ -73,11 +73,8 @@ def algrthm(X,G,Y):
         prob.append(pos_probs)
     return X,prob
 # functions for multiprocessing
-def Step_Gibbs(arg):
+def Step_Gibbs(X,G,Y):
     Trained=[]
-    X=arg[0]
-    G=arg[1]
-    Y=arg[2]
     T=G.shape[0]
     for time_step in range(10,T,10):
         G_=G[:time_step]
